@@ -1,50 +1,22 @@
+import { getAuthToken, resetCart } from "../../../support/index";
+
 describe('API: Orders - Change quantity of a product in the cart', () => {
     let authToken;
     let productId = 3; // ID du produit à tester
     let orderLineId; // ID de la ligne du panier
 
     before(() => {
-        // Connexion pour obtenir un token de connexion valide
-        cy.request({
-            method: 'POST',
-            url: `${Cypress.config('apiBaseUrl')}/login`,
-            body: {
-                username: 'test2@test.fr',
-                password: 'testtest',
-            },
-        }).then((response) => {
-            authToken = response.body.token;
+        // Authentification pour obtenir un token valide
+        getAuthToken().then((token) => {
+            authToken = token;
         });
     });
 
     beforeEach(() => {
-        // Réinitialisation du panier avant chaque test
-        // Récupération du panier
-        cy.request({
-            method: 'GET',
-            url: `${Cypress.config('apiBaseUrl')}/orders`,
-            headers: {
-                Authorization: `Bearer ${authToken}`,
-            },
-            failOnStatusCode: false, // Empêche l'échec si le panier est vide (404)
-        }).then((response) => {
-            // Extraction des articles du panier dans orderLines
-            // Si le panier est vide, orderLines sera un tableau vide
-            const orderLines = response.body.orderLines || [];
+        // Réinitialisation du panier
+        resetCart(authToken);
 
-            // Supprimer chaque article du panier
-            orderLines.forEach((orderLine) => {
-                cy.request({
-                    method: 'DELETE',
-                    url: `${Cypress.config('apiBaseUrl')}/orders/${orderLine.id}/delete`,
-                    headers: {
-                        Authorization: `Bearer ${authToken}`,
-                    },
-                });
-            });
-        });
-
-        // Ajout d'un produit au panier avant de tester la modification de la quantité
+        // Ajout d'un produit au panier et récupération de l'ID de la ligne du panier
         cy.request({
             method: 'PUT',
             url: `${Cypress.config('apiBaseUrl')}/orders/add`,
@@ -55,16 +27,16 @@ describe('API: Orders - Change quantity of a product in the cart', () => {
                 product: productId,
                 quantity: 1,
             },
-        }).then((response) => {
-            // Récupération de l'ID de la ligne du panier (orderLineId) après avoir ajouté le produit
+        }).then(() => {
+            // Récupération de l'ID de la ligne du panier après avoir ajouté le produit
             cy.request({
                 method: 'GET',
                 url: `${Cypress.config('apiBaseUrl')}/orders`,
                 headers: {
                     Authorization: `Bearer ${authToken}`,
                 },
-            }).then((getResponse) => {
-                const addedProduct = getResponse.body.orderLines.find(
+            }).then((response) => {
+                const addedProduct = response.body.orderLines.find(
                     (orderLine) => orderLine.product.id === productId
                 );
                 orderLineId = addedProduct.id; // Récupération de l'ID de la ligne du panier
@@ -93,8 +65,8 @@ describe('API: Orders - Change quantity of a product in the cart', () => {
                 headers: {
                     Authorization: `Bearer ${authToken}`,
                 },
-            }).then((getResponse) => {
-                const updatedProduct = getResponse.body.orderLines.find(
+            }).then((response) => {
+                const updatedProduct = response.body.orderLines.find(
                     (orderLine) => orderLine.id === orderLineId
                 );
                 expect(updatedProduct).to.exist;

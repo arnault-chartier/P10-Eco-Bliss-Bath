@@ -1,57 +1,26 @@
+import { getAuthToken, resetCart } from "../../../support/index";
+
 describe('API: Orders - Add a product to the cart', () => {
     let authToken;
     let productId = 3; // ID du produit à tester
 
     before(() => {
-        // Connexion pour obtenir un token de connexion valide
-        cy.request({
-            method: 'POST',
-            url: `${Cypress.config('apiBaseUrl')}/login`,
-            body: {
-                username: 'test2@test.fr',
-                password: 'testtest',
-            },
-        }).then((response) => {
-            // Stockage du token d'authentification pour l'utiliser dans les tests
-            authToken = response.body.token;
-        });
-    });
-
-    beforeEach(() => {
-        // Réinitialisation du panier avant chaque test
-        // Récupération du panier
-        cy.request({
-            method: 'GET',
-            url: `${Cypress.config('apiBaseUrl')}/orders`,
-            headers: {
-                Authorization: `Bearer ${authToken}`,
-            },
-            failOnStatusCode: false, // Empêche l'échec si le panier est vide (404)
-        }).then((response) => {
-            // Extraction des articles du panier dans orderLines
-            // Si le panier est vide, orderLines sera un tableau vide
-            const orderLines = response.body.orderLines || [];
-
-            // Supprimer chaque article du panier
-            orderLines.forEach((orderLine) => {
-                cy.request({
-                    method: 'DELETE',
-                    url: `${Cypress.config('apiBaseUrl')}/orders/${orderLine.id}/delete`,
-                    headers: {
-                        Authorization: `Bearer ${authToken}`,
-                    },
-                });
-            });
+        // Authentification pour obtenir un token valide
+        getAuthToken().then((token) => {
+            authToken = token;
         });
     });
 
     it('should add a product to the cart successfully', () => {
+        // Réinitialisation du panier
+        resetCart(authToken);
+
         // Requête pour ajouter un produit au panier
         cy.request({
-            method: 'PUT', // Utilisation de la méthode PUT
-            url: `${Cypress.config('apiBaseUrl')}/orders/add`, // Endpoint pour ajouter un produit au panier
+            method: 'PUT',
+            url: `${Cypress.config('apiBaseUrl')}/orders/add`,
             headers: {
-                Authorization: `Bearer ${authToken}`, // Utilisation du token pour l'authentification
+                Authorization: `Bearer ${authToken}`,
             },
             body: {
                 product: productId, // ID du produit à ajouter
