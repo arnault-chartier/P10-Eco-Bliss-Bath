@@ -1,12 +1,4 @@
-// Fonction de connexion
-const login = () => {
-    cy.visit('/login');
-    cy.get('[data-cy="login-input-username"]').type('test2@test.fr');
-    cy.get('[data-cy="login-input-password"]').type('testtest');
-    cy.get('[data-cy="login-submit"]').click();
-    // Vérifier la redirection vers la page d'accueil
-    cy.url().should('eq', Cypress.config('baseUrl'));
-};
+import { login } from "../../support";
 
 describe('Smoke Tests', () => {
     it('should successfully load the home page', () => {
