@@ -30,4 +30,27 @@ describe('API: Reviews - Post a new review', () => {
             expect(response.body).to.have.property('rating', 5); // Vérification de la note
         });
     });
+
+    it('should prevent XSS attacks in review comments', () => {
+        const xssPayload = '<script>alert("XSS")</script>';
+
+        cy.request({
+            method: 'POST',
+            url: `${Cypress.config('apiBaseUrl')}/reviews`,
+            headers: {
+                Authorization: `Bearer ${authToken}`,
+            },
+            body: {
+                title: 'Potential XSS', // Titre de l'avis
+                comment: xssPayload, // Contenu de l'avis avec une potentielle attaque XSS
+                rating: 4, // Note attribuée
+            },
+        }).then((response) => {
+            // Vérification du succès de la requête
+            expect(response.status).to.eq(200);
+            // Vérification que le commentaire ne contient pas le script
+            expect(response.body.comment).not.to.include('<script>');
+            expect(response.body.comment).not.to.include('alert("XSS")');
+        });
+    });
 });

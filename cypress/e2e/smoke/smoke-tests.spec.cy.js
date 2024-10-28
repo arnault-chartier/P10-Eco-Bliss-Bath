@@ -9,14 +9,12 @@ describe('Smoke Tests', () => {
         cy.get('app-home').should('be.visible');
     });
 
-    it('should allow a user to log in', () => {
+    it('should successfully load the login page', () => {
         // Vérifier la présence des champs et boutons de connexion
         cy.visit('/login');
         cy.get('[data-cy="login-input-username"]').should('be.visible');
         cy.get('[data-cy="login-input-password"]').should('be.visible');
         cy.get('[data-cy="login-submit"]').should('be.visible');
-        // Connexion
-        login();
     });
 
     it('should successfully load the products page', () => {
@@ -26,7 +24,7 @@ describe('Smoke Tests', () => {
         cy.get('[data-cy="product"]').should('have.length.greaterThan', 0);
     });
 
-    it('should allow a user to add a product to the cart', () => {
+    it('should successfully load a product page', () => {
         // Connexion avant d'ajouter un produit au panier
         login();
         // Visiter la page du produit
@@ -35,12 +33,8 @@ describe('Smoke Tests', () => {
         cy.get('[data-cy="detail-product-name"]').invoke('text').should('not.be.empty');
         // Vérifier la présence du champ de disponibilité du produit
         cy.get('[data-cy="detail-product-stock"]').should('be.visible');
-        // Cliquer sur le bouton "Ajouter au panier"
-        cy.get('[data-cy="detail-product-add"]').click();
-        // Vérifier la redirection vers la page du panier après l'ajout
-        cy.url().should('include', '/cart');
-        // Attendre que la ligne du panier soit présente, indiquant que la page est bien chargée
-        cy.get('[data-cy="cart-line"]').should('be.visible');
+        // Vérifier la présence du bouton d'ajout au panier
+        cy.get('[data-cy="detail-product-add"]').should('be.visible');
     });
 
     it('should successfully load the cart page', () => {

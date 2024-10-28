@@ -1,4 +1,4 @@
-import { login, clearCart } from "../../support";
+import { login, clearCart, getAuthToken } from "../../support";
 
 describe('Cart - Add a product to the cart and update the stock', () => {
     let productId = 5; // ID du produit à tester
@@ -24,11 +24,11 @@ describe('Cart - Add a product to the cart and update the stock', () => {
             // Vérifier que le texte contient bien un nombre avant "en stock"
             const stockParts = stockText.split(' '); // Diviser la chaîne de caractères et stocker les morceaux dans un tableau
             const stockValue = parseInt(stockParts[0].trim()); // Extraire le premier morceau du tableau et le convertir en un entier 
-            initialStock = stockValue; // Stocker la quantité dans "initialStock"
             // Vérifier que le nombre n'est pas vide (il doit exister et être un nombre valide)
-            expect(stockParts[0].trim()).to.not.equal(''); // Le nombre avant "en stock" ne doit pas être vide
+            expect(stockValue).to.not.equal(''); // Le nombre ne doit pas être vide
             expect(stockValue).to.not.be.NaN; // Vérifier que ce nombre est valide
             expect(stockValue).to.be.greaterThan(0); // Vérifier que ce nombre est supérieur à 0
+            initialStock = stockValue; // Stocker la quantité dans "initialStock"
         });
         // Cliquer sur le bouton "Ajouter au panier"
         cy.get('[data-cy="detail-product-add"]').click();
@@ -42,6 +42,31 @@ describe('Cart - Add a product to the cart and update the stock', () => {
         });
         // Vérifier que la quantité du produit dans le panier est bien "1"
         cy.get('[data-cy="cart-line-quantity"]').invoke('val').should('eq', '1');
+    });
+
+    it('should verify product is added to the cart with correct quantity via API', () => {
+        // Récupérer le token d'authentification pour effectuer la requête API sécurisée
+        getAuthToken().then((authToken) => {
+            // Envoyer une requête GET pour récupérer le contenu du panier via l'API
+            cy.request({
+                method: 'GET',
+                url: `${Cypress.config('apiBaseUrl')}/orders`,
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            }).then((response) => {
+                // Vérifier que la réponse de l'API est un succès (status 200)
+                expect(response.status).to.eq(200);
+                // Chercher le produit ajouté dans la réponse de l'API
+                const cartProduct = response.body.orderLines.find(line => line.product.id === productId);
+                // Vérifier que le produit existe bien dans le panier
+                expect(cartProduct).to.not.be.undefined;
+                // Vérifier que la quantité ajoutée dans le panier est correcte
+                expect(cartProduct.quantity).to.equal(1);
+                // Vérifier que le nom du produit correspond au produit ajouté
+                expect(cartProduct.product.name).to.equal(productName);
+            });
+        });
     });
 
     it('should verify stock decrement on product page after adding to cart', () => {
